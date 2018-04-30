@@ -15,11 +15,31 @@ class ImportCluster(flows.BaseFlow):
     def run(self):
         if "Node[]" not in self.parameters:
             integration_id = self.parameters['TendrlContext.integration_id']
+            _cluster = NS.tendrl.objects.Cluster(
+                integration_id=NS.tendrl_context.integration_id).load()
+            if (_cluster.status is not None and
+                    _cluster.status != "" and
+                    _cluster.current_job['status'] == 'in_progress' and
+                    _cluster.status in
+                    ["importing", "unmanaging", "expanding"]):
+                raise FlowExecutionFailedError(
+                    "Another job in progress for cluster, please wait till "
+                    "the job finishes (job_id: %s) (integration_id: %s) " % (
+                        _cluster.current_job['job_id'],
+                        _cluster.integration_id
+                    )
+                )
             short_name = self.parameters.get('Cluster.short_name', None)
             if short_name:
                 if not re.match('^[a-zA-Z0-9][A-Za-z0-9_]*$',
                                 short_name) or \
                    len(short_name) > 64:
+                    _cluster = NS.tendrl.objects.Cluster(
+                        integration_id=NS.tendrl_context.integration_id
+                    ).load()
+                    _cluster.status = ""
+                    _cluster.current_job['status'] = 'failed'
+                    _cluster.save()
                     raise FlowExecutionFailedError(
                         "Invalid cluster short_name: %s. "
                         "Only alpha-numeric and underscore "
@@ -36,23 +56,15 @@ class ImportCluster(flows.BaseFlow):
                 ).load()
                 if _cluster.short_name and short_name and \
                     _cluster.short_name == short_name.strip().lower():
+                    _cluster = NS.tendrl.objects.Cluster(
+                        integration_id=NS.tendrl_context.integration_id
+                    ).load()
+                    _cluster.status = ""
+                    _cluster.current_job['status'] = 'failed'
+                    _cluster.save()
                     raise FlowExecutionFailedError(
                         "Cluster with name: %s already exists" % short_name
                     )
-            _cluster = NS.tendrl.objects.Cluster(
-                integration_id=NS.tendrl_context.integration_id).load()
-            if (_cluster.status is not None and
-                    _cluster.status != "" and
-                    _cluster.current_job['status'] == 'in_progress' and
-                    _cluster.status in
-                    ["importing", "unmanaging", "expanding"]):
-                raise FlowExecutionFailedError(
-                    "Another job in progress for cluster, please wait till "
-                    "the job finishes (job_id: %s) (integration_id: %s) " % (
-                        _cluster.current_job['job_id'],
-                        _cluster.integration_id
-                    )
-                )
 
             if short_name not in [None, ""]:
                 _cluster.short_name = short_name
