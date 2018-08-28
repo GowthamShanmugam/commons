@@ -57,7 +57,12 @@ def test_run():
     NS.publisher_id = "publisher"
     with patch.object(Job, 'save', save):
         with patch.object(Job, 'load', load_job_finished):
-            obj.run()
+            with patch.object(
+                NS._int.client,
+                'read',
+                return_value=maps.NamedDict(leaves=[])
+            ):
+                obj.run()
 
     # failure
     NS.publisher_id = maps.NamedDict()
@@ -65,4 +70,9 @@ def test_run():
 
     with patch.object(NS.tendrl.objects.Job, 'save', save):
         with patch.object(Job, 'load', load_job_failed):
-            obj.run()
+            with patch.object(
+                NS._int.client,
+                'read',
+                return_value=maps.NamedDict(leaves=[])
+            ):
+                obj.run()

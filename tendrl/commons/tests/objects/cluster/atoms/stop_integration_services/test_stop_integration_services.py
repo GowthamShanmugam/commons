@@ -82,6 +82,8 @@ def read(*args, **kwargs):
             return return_hash()
         elif args[0] == "clusters/test_uuid/data":
             return data()
+        elif args[0] == "/queue":
+            return maps.NamedDict(leaves=[])
     else:
         return None
 
