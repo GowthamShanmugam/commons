@@ -55,10 +55,13 @@ class StopIntegrationServices(objects.BaseAtom):
                     job_id=self.parameters['job_id'],
                     flow_id=self.parameters['flow_id'],
                 )
-
+            # Find number jobs in a queue
+            queue = etcd_utils.read("/queue")
+            no_of_jobs = sum(1 for x in queue.leaves)
             # Wait for (no of nodes) * 10 secs for stop service job to complete
+            # + 5 sec per 5 job for waiting time in a queue
             loop_count = 0
-            wait_count = (len(child_job_ids)) * 2
+            wait_count = (len(child_job_ids)) * 2 + (no_of_jobs / 5)
             while True:
                 child_jobs_failed = []
                 if loop_count >= wait_count:

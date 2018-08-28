@@ -2,6 +2,7 @@ import time
 import uuid
 
 from tendrl.commons import objects
+from tendrl.commons.utils import etcd_utils
 from tendrl.commons.utils import log_utils as logger
 
 
@@ -36,9 +37,13 @@ class DeleteMonitoringDetails(objects.BaseAtom):
             payload=payload
         ).save()
 
-        # Wait for 2 mins for the job to complete
+        # Find number jobs in a queue
+        queue = etcd_utils.read("/queue")
+        no_of_jobs = sum(1 for x in queue.leaves)
+        # Wait for 2 mins for the job to complete +
+        # 5 sec per 5 job for waiting time in a queue
         loop_count = 0
-        wait_count = 24
+        wait_count = 24 + (no_of_jobs / 5)
         while True:
             child_job_failed = False
             if loop_count >= wait_count:

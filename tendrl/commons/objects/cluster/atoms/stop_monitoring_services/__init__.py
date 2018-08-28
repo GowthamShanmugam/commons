@@ -56,9 +56,13 @@ class StopMonitoringServices(objects.BaseAtom):
                     flow_id=self.parameters['flow_id'],
                 )
 
+            # Find number jobs in a queue
+            queue = etcd_utils.read("/queue")
+            no_of_jobs = sum(1 for x in queue.leaves)
             loop_count = 0
-            # one minute for each job
-            wait_count = (len(child_job_ids)) * 12
+            # one minute for each job + 5 sec per 5 jobs for waiting time
+            # in a queue
+            wait_count = (len(child_job_ids)) * 12 + (no_of_jobs / 5)
             while True:
                 child_jobs_failed = []
                 if loop_count >= wait_count:
