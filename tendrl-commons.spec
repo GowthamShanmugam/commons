@@ -9,11 +9,10 @@ URL: https://github.com/Tendrl/commons
 
 BuildRequires: pytest
 BuildRequires: python2-devel
-BuildRequires: python-mock
 BuildRequires: python-six
 BuildRequires: systemd
 
-Requires: ansible
+Requires: ansible >= 2.5.0
 Requires: python-maps
 Requires: python-dateutil
 Requires: python-dns
